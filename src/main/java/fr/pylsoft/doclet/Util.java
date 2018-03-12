@@ -1,6 +1,8 @@
 package fr.pylsoft.doclet;
 
 import com.sun.javadoc.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -17,6 +19,8 @@ class Util {
     private final static Pattern PATTERN = Pattern.compile("^(.*)\\(\\?\\:([^\\)]*)\\)(.*)$");
     private final static String CUCUMBER_NAME_PACKAGE = "cucumber.api.java";
     private final static String PART_NAME_JAR_CUCUMBER = "cucumber-java";
+
+    private static Logger logger = LoggerFactory.getLogger(Util.class);
 
     public static void main(String[] args) {
         System.out.println("----------");
@@ -193,15 +197,18 @@ class Util {
             for (int index = 1; index <= matcher.groupCount(); index++) {
                 resultList = extractPhrasesList(matcher.group(index), resultList);
             }
-        } else resultList = Arrays.stream(phrase.split("\\|")) //
-                .map((String lastPhrase) -> {
-                    if (phrasesList.size() == 0) {
-                        return Collections.singletonList(lastPhrase);
-                    } else {
-                        return phrasesList.stream().map(firstPhrase -> (firstPhrase + lastPhrase))
-                                .collect(Collectors.toList());
-                    }
-                }).flatMap(List::stream).collect(Collectors.toList());
+        } else {
+            resultList = Arrays.stream(phrase.split("\\|")) //
+                    .map((String lastPhrase) -> {
+                        if (phrasesList.size() == 0) {
+                            return Collections.singletonList(lastPhrase);
+                        } else {
+
+                            return phrasesList.stream().map(firstPhrase -> (firstPhrase + lastPhrase))
+                                    .collect(Collectors.toList());
+                        }
+                    }).flatMap(List::stream).collect(Collectors.toList());
+        }
 
         return resultList;
     }

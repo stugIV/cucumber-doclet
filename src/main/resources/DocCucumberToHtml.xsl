@@ -51,7 +51,7 @@
 								newS.append(annotation.phrases[0]);
 								newH3.append(newS);
 							} else {
-								newH3.append(annotation.phrases[0]);
+								newH3.append(annotation.label);
 							}
 							result.append(newH3);
 
@@ -173,9 +173,7 @@
 	</xsl:template>
 	<xsl:template match="ANNOTATION" mode="html">
 		<xsl:variable name= "phraseName">
-			<b><xsl:value-of select="@name" /></b>
-			&#160;
-			<i><xsl:value-of select="translate(PHRASE,'\','')" /></i>
+			<b><xsl:value-of select="@phrase" /></b>
 		</xsl:variable>
 		<div>
 			<xsl:choose>
@@ -213,9 +211,8 @@
 		<xsl:apply-templates select="../COMMENT" mode="script" />
 		<xsl:apply-templates select="../TAG[@name='example']" mode="script" />
 		<xsl:apply-templates select="PARAM" mode="script" />
-		annotation.label = "<xsl:value-of select="concat(@name,' ',@phrase)" />";
 		annotation.id = "<xsl:value-of select="$idAnnotation" />";
-		annotation.label = "<xsl:value-of select="concat(@name,' ',PHRASE)" />";
+		annotation.label = "<xsl:value-of select="@phrase" />";
 		annotations[annotation.id] = annotation;
 		<xsl:apply-templates select="PHRASE" mode="script" />		
 	</xsl:template>
@@ -236,7 +233,7 @@
 		annotation.params.push(param);
 	</xsl:template>
 	<xsl:template match="PHRASE" mode="script">
-		annotation.phrases.push("<xsl:value-of select="concat(../@name,' ', .)" />");
+		annotation.phrases.push("<xsl:value-of select="concat(../@phrase,' ', .)" />");
 	</xsl:template>
 
 </xsl:stylesheet>

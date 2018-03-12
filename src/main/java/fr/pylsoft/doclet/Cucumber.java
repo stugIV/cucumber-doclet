@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -328,6 +329,8 @@ public class Cucumber {
             if (xml || (!html && !txt)) {
                 Path xmlFilePath = Paths.get(fullPath, outputFileName + ".xml");
                 final StreamResult xmlOutput = new StreamResult(xmlFilePath.toFile());
+                transformerXML.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformerXML.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
                 transformerXML.transform(source, xmlOutput);
                 System.out.println("File '" + xmlFilePath + "' created.");
             }

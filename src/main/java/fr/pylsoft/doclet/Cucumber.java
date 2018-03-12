@@ -4,6 +4,8 @@ import com.sun.javadoc.*;
 import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 import fr.pylsoft.doclet.DocletTransformer.ATTRIBUTE_XML;
 import fr.pylsoft.doclet.DocletTransformer.TAG_XML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -23,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Cucumber {
     private final static String LINE_BREAK = "\\n";
@@ -35,11 +38,17 @@ public class Cucumber {
     private static final String FILE_XSL_XML_VERS_TXT_DEFAULT = "DocCucumberToText.xsl";
     private static final String DEFAULT_OUTPUT_FILE_NAME = "CataloguePhraseCucumber";
 
+    private static final String DEFAULT_GROUP_NAME = "Other";
+
     private final static List<String> ANNOTATIONS_INCLUDED = new ArrayList<>();
 
     private final static Map<String, Integer> mapAnnotationsFound = new HashMap<>();
 
     private final static Map<String, String> listOptions = new HashMap<>();
+
+    private final static Map<String, List<String>> groups = new HashMap<>();
+
+    private static Logger logger = LoggerFactory.getLogger(Cucumber.class);
 
     public static int optionLength(String option) {
         Integer length = Option.OPTIONS_LENGTH.get(option);
@@ -58,6 +67,15 @@ public class Cucumber {
             // Update options
             for (String[] option : root.options()) {
                 listOptions.put(option[0], option.length > 1 ? option[1] : "");
+                if (option[0].equals(Option.GROUP)) {
+                    Arrays.stream(option[2].split(":")).map(packageName -> {
+                        if(groups.get(packageName) == null)
+                          groups.put(packageName, new LinkedList<>(Collections.singletonList(option[1])));
+                        else
+                          groups.get(packageName).add(option[1]);
+                        return packageName;
+                    }).collect(Collectors.toList());
+                }
             }
 
             Document document = createXMLDocument(root);
@@ -81,19 +99,39 @@ public class Cucumber {
             final DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.newDocument();
             Element rootElement = document.createElement(TAG_XML.ROOT);
-            rootElement.setAttribute(ATTRIBUTE_XML.DATE, LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
+            rootElement.setAttribute(ATTRIBUTE_XML.DATE, LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             rootElement.setAttribute(ATTRIBUTE_XML.VERSION, Cucumber.class.getPackage().getImplementationVersion());
             document.appendChild(rootElement);
 
-            ClassDoc[] classes = root.classes();
-            for (ClassDoc classDoc : classes) {
-                Element elm = docByClass(document, classDoc);
-                if (elm != null) {
-                    rootElement.appendChild(elm);
+            if (!listOptions.containsKey(Option.GROUP)) {
+                ClassDoc[] classes = root.classes();
+                for (ClassDoc classDoc : classes) {
+                    Element elm = docByClass(document, classDoc);
+                    if (elm != null) {
+                        rootElement.appendChild(elm);
+                    }
                 }
+                informAboutAnnotationsFoundInDocument(document, rootElement);
             }
-            informAboutAnnotationsFoundInDocument(document, rootElement);
-
+            else {
+                Map<String, Element> groups = new HashMap<>();
+                ClassDoc[] classes = root.classes();
+                for (ClassDoc classDoc : classes) {
+                    Element elm = docByClass(document, classDoc);
+                    if (elm != null) {
+                        String groupName = elm.getAttribute(ATTRIBUTE_XML.GROUP);
+                        Element group = groups.get(groupName);
+                        if (group == null) {
+                            group = document.createElement(TAG_XML.GROUP);
+                            group.setAttribute(ATTRIBUTE_XML.NAME, groupName);
+                            groups.put(groupName, group);
+                            rootElement.appendChild(group);
+                        }
+                        group.appendChild(elm);
+                    }
+                }
+                informAboutAnnotationsFoundInDocument(document, rootElement);
+            }
             return document;
         } catch (ParserConfigurationException e) {
             throw new DocletCucumberException("Error while retrieving Doclet configuration", e);
@@ -131,6 +169,13 @@ public class Cucumber {
     private static Element docByClass(Document document, ClassDoc classDoc) {
         Element elementClass = document.createElement(TAG_XML.CLASS);
         elementClass.setAttribute(ATTRIBUTE_XML.NAME, classDoc.name());
+        elementClass.setAttribute(ATTRIBUTE_XML.PACKAGE, classDoc.qualifiedName());
+        if (listOptions.containsKey(Option.GROUP)) {
+            String groupName = DEFAULT_GROUP_NAME;
+            if (groups.get(classDoc.qualifiedName()) != null)
+                groupName = groups.get(classDoc.qualifiedName()).get(0);
+            elementClass.setAttribute(ATTRIBUTE_XML.GROUP, groupName);
+        }
 
         Arrays.stream(classDoc.methods()) //
                 .map(methodDoc -> docByMethod(document, methodDoc)) //

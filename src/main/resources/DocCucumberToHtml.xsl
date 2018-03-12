@@ -41,7 +41,7 @@
 
 						var annotations = new Array();
 						
-						<xsl:apply-templates select="CLASS"  mode="script" />
+						<xsl:apply-templates select="GROUP"  mode="script" />
 				
 						function viewPhrase(result, annotation) {
 							result.empty();
@@ -146,7 +146,7 @@
 						<h1>List of executable sentences</h1>
 						<div id="divMenu">
 							<ul id="menu">
-								<xsl:apply-templates select="CLASS"  mode="html" />
+								<xsl:apply-templates select="GROUP"  mode="html" />
 							</ul>
 						</div>
 						<div id="divDetail" />
@@ -154,6 +154,20 @@
 				</div>
 			</body>
 		</html>
+	</xsl:template>
+	<xsl:template match="GROUP" mode="html">
+		<li class="ui-widget-header">
+			<div>
+				<xsl:value-of select="@name" />
+			</div>
+		</li>
+		<xsl:apply-templates select="CLASS" mode="group">
+		</xsl:apply-templates>
+	</xsl:template>
+	<xsl:template match="CLASS" mode="group">
+		<xsl:apply-templates select="FUNCTION" mode="html">
+			<xsl:with-param name="classPosition" select="position()" />
+		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="CLASS" mode="html">
 		<li class="ui-widget-header">
@@ -187,6 +201,10 @@
 		</div>
 	</xsl:template>
 
+	<xsl:template match="GROUP" mode="script">
+		<xsl:apply-templates select="CLASS" mode="script">
+		</xsl:apply-templates>
+	</xsl:template>
 	<xsl:template match="CLASS" mode="script">
 		<xsl:apply-templates select="FUNCTION" mode="script">
 			<xsl:with-param name="classPosition" select="position()" />

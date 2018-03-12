@@ -12,6 +12,7 @@ final class Option {
 	static final String HTML = "-html";
 	static final String TXT = "-txt";
 	static final String TRANSFORMERS = "-t";
+	static final String GROUP = "-group";
 
 	static final Map<String, Integer> OPTIONS_LENGTH = new HashMap<>();
 
@@ -24,5 +25,6 @@ final class Option {
 		OPTIONS_LENGTH.put(HTML, 1);
 		OPTIONS_LENGTH.put(TXT, 1);
 		OPTIONS_LENGTH.put(TRANSFORMERS, 2);
+		OPTIONS_LENGTH.put(GROUP, 3);
 	}
 }

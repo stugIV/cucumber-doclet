@@ -28,6 +28,7 @@ public abstract class DocletTransformer {
 
     protected static class TAG_XML {
         public static final String ROOT = "JAVADOC";
+        public static final String GROUP = "GROUP";
         public static final String CLASS = "CLASS";
         public static final String FUNCTION = "FUNCTION";
         public static final String ANNOTATION = "ANNOTATION";
@@ -43,6 +44,8 @@ public abstract class DocletTransformer {
         public static final String VERSION = "docletVersion";
         public static final String DATE = "date";
         public static final String NAME = "name";
+        public static final String PACKAGE = "package";
+        public static final String GROUP = "group";
         public static final String PHRASE = "phrase";
         public static final String VALUE = "value";
         public static final String TYPE = "type";

@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 class Util {
 
     private final static Pattern PATTERN = Pattern.compile("^(.*)\\(\\?\\:([^\\)]*)\\)(.*)$");
-    private final static String NOM_PACKAGE_CUCUMBER = "cucumber.api.java";
-    private final static String PART_NOM_JAR_CUCUMBER = "cucumber-java";
+    private final static String CUCUMBER_NAME_PACKAGE = "cucumber.api.java";
+    private final static String PART_NAME_JAR_CUCUMBER = "cucumber-java";
 
     public static void main(String[] args) {
         System.out.println("----------");
@@ -26,33 +26,29 @@ class Util {
         //String phrase = "un b�n�ficiaire ouvrant-droit avec le matricule '(.*)' et le num�ro de famille '(.*)'";
         System.out.println(phrase);
         System.out.println("-------");
-        extraireListePhrases(phrase).forEach(System.out::println);
+        extractPhrasesList(phrase).forEach(System.out::println);
 
         System.out.println("----------");
         System.out.println("- Test 2 -");
         System.out.println("----------");
-        String phraseApresTraitement = "un bénéficiaire : ouvrant-droit avec le matricule '(.*)' et le numéro de famille '(.*)':";
-        System.out.println(phraseApresTraitement);
+        String phraseAfterTreatment = "a beneficiary : opening-right with the roll number '(.*)' and the family number '(.*)':";
+        System.out.println(phraseAfterTreatment);
         System.out.println("-------");
         {
             String[] parametres = new String[]{"PARAM1", "PARAM2", "PARAM3"};
             for (String parametre : parametres) {
                 String nomParametre = "[" + parametre + "]";
-                phraseApresTraitement = phraseApresTraitement.replaceFirst("\\([^\\)]*\\)|(:$)", "$1" + nomParametre);
+                phraseAfterTreatment = phraseAfterTreatment.replaceFirst("\\([^\\)]*\\)|(:$)", "$1" + nomParametre);
             }
 
-            System.out.println("phraseApresTraitement=" + phraseApresTraitement);
+            System.out.println("phrase after treatment=" + phraseAfterTreatment);
         }
         System.out.println("----------");
         System.out.println("- Test 3 -");
         System.out.println("----------");
         try {
-            List<String> listeAnnotations = recupererListeAnnotationsCucumber();
-            System.out.println("nb annotation cucumber trouvée =" + listeAnnotations.size());
-
-//			listeAnnotations .stream() //
-//			.map(nom -> " - " + nom) //
-//			.forEach(System.out::println);
+            List<String> annotationList = recoverCucumberAnnotationList();
+            System.out.println("no annotation cucumber found =" + annotationList.size());
 
         } catch (DocletCucumberException e) {
             System.out.println(e.getMessage());
@@ -68,46 +64,44 @@ class Util {
     }
 
     /**
-     * Cette méthode permet de récupérer l'ensemble des annotations Cucumber
-     * Contenu dans le jar cucumber-java
+     * This method retrieves all Cucumber annotations
+     * from the jar cucumber-java
      *
-     * @return La liste des noms de chaque annotation cucumber dans toutes les langues
+     * @return The list of names of each annotation cucumber in all languages
      */
-    static List<String> recupererListeAnnotationsCucumber() throws DocletCucumberException {
-        List<String> classes = traitementJarParClassPath();
+    static List<String> recoverCucumberAnnotationList() throws DocletCucumberException {
+        List<String> classes = processJarByClassPath();
 
         if (classes.isEmpty()) {
-            System.out.println("le jar " + PART_NOM_JAR_CUCUMBER + " n'a pas été trouvé dans le classPath");
-            classes = traitementJarParClassLoader();
+            System.out.println("le jar " + PART_NAME_JAR_CUCUMBER + " was not found in classPath");
+            classes = processJarByClassLoader();
 
             if (classes.isEmpty()) {
-                throw new DocletCucumberException("le jar " + PART_NOM_JAR_CUCUMBER + " n'a pas été trouvé dans le classLoader!");
+                throw new DocletCucumberException("the jar " + PART_NAME_JAR_CUCUMBER + " was not found in the classLoader");
             }
         }
         return classes;
     }
 
     /**
-     * Cette méthode essaie de retrouver le jar cucumber-java via le classLoader
+     * This method tries to find the jar cucumber-java via the classLoader
      *
-     * @return La liste des noms de chaque annotation cucumber dans toutes les langues
-     * Si le jar a été trouvé dans le classLoader
+     * @return The list of names of each annotation cucumber in all languages
+     * If the jar was found in the classLoader
      */
-    private static List<String> traitementJarParClassLoader() {
+    private static List<String> processJarByClassLoader() {
         List<String> classes = new ArrayList<>();
-        String nomPackage = NOM_PACKAGE_CUCUMBER.replace('.', '/');
+        String packageName = CUCUMBER_NAME_PACKAGE.replace('.', '/');
 
         Enumeration<URL> resource;
         try {
-            resource = Util.class.getClassLoader().getResources(nomPackage);
+            resource = Util.class.getClassLoader().getResources(packageName);
         } catch (IOException e) {
-            // TODO levé une log
-            // si problème on sort
             return classes;
         }
 
         Collections.list(resource).forEach(url -> {//
-            System.out.println("url trouvé yes! = " + url.toString());
+            System.out.println("url found = " + url.toString());
             try {
                 URLConnection con = url.openConnection();
                 JarFile jfile = null;
@@ -117,11 +111,10 @@ class Util {
                     JarURLConnection jarCon = (JarURLConnection) con;
                     jfile = jarCon.getJarFile();
 
-                    classes.addAll(traitementJar(jfile));
+                    classes.addAll(processJar(jfile));
                 }
             } catch (IOException e) {
-                // TODO levé une log
-                // si problème on ne fait rien et on passe au jar suivant
+                // if problem we do not do anything and we go to the next jar
             }
         });
         return classes;
@@ -129,30 +122,29 @@ class Util {
     }
 
     /**
-     * Cette méthode essaie de retrouver le jar cucumber-java via le classpath
+     * This method tries to find the jar cucumber-java via the classpath
      *
-     * @return La liste des noms de chaque annotation cucumber dans toutes les langues
-     * Si le jar a été trouvé dans le classpath systeme
+     * @return The list of names of each annotation cucumber in all languages
+     * If the jar was found in the classpath system
      */
-    private static List<String> traitementJarParClassPath() {
+    private static List<String> processJarByClassPath() {
         List<String> classes = new ArrayList<>();
 
-        // On récupère toutes les entrées du CLASSPATH
+        // We retrieve all entries of CLASSPATH
         String[] entries = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
 
-        // Pour toutes ces entrées, on verifie si elles contiennent un jar
+        // For all these entries, we check if they contain a jar
         for (final String jar : entries) {
             if (jar.endsWith(".jar")) {
-                System.out.println("jar du classpath :" + jar);
-                if (isNotNullAndNotEmpty(jar) && jar.contains(PART_NOM_JAR_CUCUMBER)) {
-                    System.out.println("Jar " + PART_NOM_JAR_CUCUMBER + " trouvé yes!:" + jar);
+                System.out.println("jar from classpath :" + jar);
+                if (isNotNullAndNotEmpty(jar) && jar.contains(PART_NAME_JAR_CUCUMBER)) {
+                    System.out.println("Jar " + PART_NAME_JAR_CUCUMBER + " found:" + jar);
                     try (JarFile jfile = new JarFile(jar);) {
 
-                        classes.addAll(traitementJar(jfile));
+                        classes.addAll(processJar(jfile));
                     } catch (IOException e) {
-                        // TODO on leve une Log
-                        // Et on ne fait rien car pas le jar qui nous intéresse
-                        // ne devrait pas arriver
+                        // And we do not do anything because not the jar that interests us
+                        // should not happen
                     }
                 }
             }
@@ -161,68 +153,67 @@ class Util {
     }
 
     /**
-     * Cette méthode retourne la liste des annotations Cucumber contenu dans le
-     * jarFile et commencant par
+     * This method returns the list of Cucumber annotations contained in the jarFile
+     * and starting with
      * {@link fr.pylsoft.doclet.Util}
      *
-     * @param jarFile - le jarFile contenant le package
+     * @param jarFile - the jarFile containing the package
      *                {@link fr.pylsoft.doclet.Util}
-     * @return la liste des annotations Cucumber trouvées
+     * @return the list of Cucumber annotations found
      */
-    private static List<String> traitementJar(final JarFile jarFile) {
+    private static List<String> processJar(final JarFile jarFile) {
 
         return Collections.list(jarFile.entries()).stream() //
-                .filter(element -> element.getName().matches("^" + NOM_PACKAGE_CUCUMBER.replace(".", "/") + "/(.*)/(.*).class$")) //
+                .filter(element -> element.getName().matches("^" + CUCUMBER_NAME_PACKAGE.replace(".", "/") + "/(.*)/(.*).class$")) //
                 .map(element -> element.getName().replace('/', '.').replaceAll(".class", "")) //
-                .map(nomClasse -> {
+                .map(className -> {
                     try {
-                        return Class.forName(nomClasse).getSimpleName();
+                        return Class.forName(className).getSimpleName();
                     } catch (ClassNotFoundException e) {
-                        // TODO on leve une log
-                        System.out.println("élément pas une classe :" + nomClasse);
-                        // on ne fait rien et on passe à la classe suivante
-                        // ne devrait pas arriver
+                        System.out.println("element not a class :" + className);
+                        // we do not do anything and we move on to the next class
+                        // should not happen
                         return "";
                     }
                 }) //
                 .collect(Collectors.toList());
     }
 
-    static List<String> extraireListePhrases(final String phrase) {
-        return extraireListePhrases(phrase, new ArrayList<>());
+    static List<String> extractPhrasesList(final String phrase) {
+        return extractPhrasesList(phrase, new ArrayList<>());
     }
 
-    private static List<String> extraireListePhrases(final String phrase, final List<String> listePhrases) {
+    private static List<String> extractPhrasesList(final String phrase, final List<String> phrasesList) {
 
-        List<String> listePhrasesRetour = listePhrases;
+        List<String> resultList = phrasesList;
 
         Matcher matcher = PATTERN.matcher(phrase);
 
         if (matcher.matches()) {
             for (int index = 1; index <= matcher.groupCount(); index++) {
-                listePhrasesRetour = extraireListePhrases(matcher.group(index), listePhrasesRetour);
+                resultList = extractPhrasesList(matcher.group(index), resultList);
             }
-        } else listePhrasesRetour = Arrays.stream(phrase.split("\\|")) //
-                .map((String boutPhrase) -> {
-                    if (listePhrases.size() == 0) {
-                        return Collections.singletonList(boutPhrase);
+        } else resultList = Arrays.stream(phrase.split("\\|")) //
+                .map((String lastPhrase) -> {
+                    if (phrasesList.size() == 0) {
+                        return Collections.singletonList(lastPhrase);
                     } else {
-                        return listePhrases.stream().map(debutPhrase -> (debutPhrase + boutPhrase))
+                        return phrasesList.stream().map(firstPhrase -> (firstPhrase + lastPhrase))
                                 .collect(Collectors.toList());
                     }
                 }).flatMap(List::stream).collect(Collectors.toList());
 
-        return listePhrasesRetour;
+        return resultList;
     }
 
-    static String ajoutParametreDansPhrasePossible(final String phrasePossible, final Parameter[] parametres) {
+    static String additionParameterInPossiblePhrase(final String possiblePhrase, final Parameter[] parameters) {
 
-        String phraseApresTraitement = phrasePossible;
-        for (Parameter parametre : parametres) {
-            String nomParametre = "[" + parametre.name() + "]";
-            phraseApresTraitement = phraseApresTraitement.replaceFirst("\\([^\\)]*\\)|(:$)", "$1" + nomParametre);
+        String phraseAfterProcess = possiblePhrase;
+        for (Parameter parameter : parameters) {
+            String parameterName = "[" + parameter.name() + "]";
+            phraseAfterProcess = phraseAfterProcess.replaceFirst("\\([^\\)]*\\)|(:$)", "$1" + parameterName);
         }
 
-        return phraseApresTraitement;
+        return phraseAfterProcess;
     }
 }

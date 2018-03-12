@@ -2,7 +2,7 @@ package fr.pylsoft.doclet;
 
 import com.sun.javadoc.*;
 import com.sun.javadoc.AnnotationDesc.ElementValuePair;
-import fr.pylsoft.doclet.DocletTransformer.ATTRIBUT_XML;
+import fr.pylsoft.doclet.DocletTransformer.ATTRIBUTE_XML;
 import fr.pylsoft.doclet.DocletTransformer.TAG_XML;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -24,21 +24,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Cucumber {
-    private final static String SAUT_DE_LIGNE = "\\n";
-    private final static String SEPARATEUR = ",";
+    private final static String LINE_BREAK = "\\n";
+    private final static String SEPARATOR = ",";
 
     private final static String DEPRECATED = "Deprecated";
     private final static String EXAMPLE = "example";
 
-    private static final String FICHIER_XSL_XML_VERS_HTML_DEFAUT = "DocCucumberToHtml.xsl";
-    private static final String FICHIER_XSL_XML_VERS_TXT_DEFAUT = "DocCucumberToTexte.xsl";
-    private static final String NOM_FICHIER_SORTIE_PAR_DEFAUT = "CataloguePhraseCucumber";
+    private static final String FILE_XSL_XML_VERS_HTML_DEFAULT = "DocCucumberToHtml.xsl";
+    private static final String FILE_XSL_XML_VERS_TXT_DEFAULT = "DocCucumberToText.xsl";
+    private static final String DEFAULT_OUTPUT_FILE_NAME = "CataloguePhraseCucumber";
 
-    private final static List<String> ANNOTATIONS_INCLUSES = new ArrayList<>();
+    private final static List<String> ANNOTATIONS_INCLUDED = new ArrayList<>();
 
-    private final static Map<String, Integer> mapAnnotationsTrouvees = new HashMap<>();
+    private final static Map<String, Integer> mapAnnotationsFound = new HashMap<>();
 
-    private final static Map<String, String> listeOptions = new HashMap<>();
+    private final static Map<String, String> listOptions = new HashMap<>();
 
     public static int optionLength(String option) {
         Integer length = Option.OPTIONS_LENGTH.get(option);
@@ -46,24 +46,24 @@ public class Cucumber {
     }
 
     /**
-     * @param root Document racine contenant le résultat du traitement réalisé par javadoc.exe
-     * @return true si traitement ok sinon false
+     * @param root Root document containing the result of javadoc.exe processing
+     * @return true if treatment OK otherwise false
      */
     public static boolean start(RootDoc root) {
         try {
-            ANNOTATIONS_INCLUSES.addAll(Util.recupererListeAnnotationsCucumber());
-            ANNOTATIONS_INCLUSES.addAll(Collections.singletonList(DEPRECATED));
+            ANNOTATIONS_INCLUDED.addAll(Util.recoverCucumberAnnotationList());
+            ANNOTATIONS_INCLUDED.addAll(Collections.singletonList(DEPRECATED));
 
-            // Mise à jour des options
+            // Update options
             for (String[] option : root.options()) {
-                listeOptions.put(option[0], option.length > 1 ? option[1] : "");
+                listOptions.put(option[0], option.length > 1 ? option[1] : "");
             }
 
-            Document document = creerDocumentXml(root);
+            Document document = createXMLDocument(root);
 
-            creerFichiersSortiesViaTransformers(listeOptions.get(Option.TRANSFORMERS), document);
+            createOutputFileViaTransformers(listOptions.get(Option.TRANSFORMERS), document);
 
-            creerFichiersSorties(document);
+            createOutputFile(document);
 
         } catch (DocletCucumberException e) {
             System.out.println(e.getMessage());
@@ -73,194 +73,194 @@ public class Cucumber {
         return true;
     }
 
-    private static Document creerDocumentXml(final RootDoc root) throws DocletCucumberException {
+    private static Document createXMLDocument(final RootDoc root) throws DocletCucumberException {
 
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             final DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.newDocument();
-            Element elementRacine = document.createElement(TAG_XML.RACINE);
-            elementRacine.setAttribute(ATTRIBUT_XML.DATE, LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
-            elementRacine.setAttribute(ATTRIBUT_XML.VERSION, Cucumber.class.getPackage().getImplementationVersion());
-            document.appendChild(elementRacine);
+            Element rootElement = document.createElement(TAG_XML.ROOT);
+            rootElement.setAttribute(ATTRIBUTE_XML.DATE, LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
+            rootElement.setAttribute(ATTRIBUTE_XML.VERSION, Cucumber.class.getPackage().getImplementationVersion());
+            document.appendChild(rootElement);
 
             ClassDoc[] classes = root.classes();
-            for (ClassDoc classeDoc : classes) {
-                Element elm = docParClasse(document, classeDoc);
+            for (ClassDoc classDoc : classes) {
+                Element elm = docByClass(document, classDoc);
                 if (elm != null) {
-                    elementRacine.appendChild(elm);
+                    rootElement.appendChild(elm);
                 }
             }
-            renseignerAnnotationsTrouveesDansDocument(document, elementRacine);
+            informAboutAnnotationsFoundInDocument(document, rootElement);
 
             return document;
         } catch (ParserConfigurationException e) {
-            throw new DocletCucumberException("Erreur durant la récupération de la configuration du Doclet", e);
+            throw new DocletCucumberException("Error while retrieving Doclet configuration", e);
         }
     }
 
-    private static void renseignerAnnotationsTrouveesDansDocument(final Document document, final Element elementRacine) {
-        if (mapAnnotationsTrouvees.isEmpty()) {
+    private static void informAboutAnnotationsFoundInDocument(final Document document, final Element rootElement) {
+        if (mapAnnotationsFound.isEmpty()) {
             return;
         }
 
         Element elementResume = document.createElement(TAG_XML.RESUME);
-        elementRacine.appendChild(elementResume);
+        rootElement.appendChild(elementResume);
 
-        mapAnnotationsTrouvees.forEach((annotation, nombre) -> {
-            System.out.println(annotation + "=" + nombre + " phrases");
+        mapAnnotationsFound.forEach((annotation, number) -> {
+            System.out.println(annotation + "=" + number + " phrases");
             Element elementAnnotation = document.createElement(TAG_XML.ANNOTATION);
-            elementAnnotation.setAttribute(ATTRIBUT_XML.NOM, annotation);
-            elementAnnotation.setAttribute(ATTRIBUT_XML.NOMBRE_PHRASE, nombre.toString());
+            elementAnnotation.setAttribute(ATTRIBUTE_XML.NAME, annotation);
+            elementAnnotation.setAttribute(ATTRIBUTE_XML.NAME_PHRASE, number.toString());
             elementResume.appendChild(elementAnnotation);
         });
 
     }
 
-    private static void ajouterNouvellePhraseDansMapAnnotation(String nomAnnotation) {
-        Integer nombre = mapAnnotationsTrouvees.get(nomAnnotation);
-        if (nombre == null) {
-            nombre = 1;
+    private static void addNewPhraseInMapAnnotation(String annotationName) {
+        Integer number = mapAnnotationsFound.get(annotationName);
+        if (number == null) {
+            number = 1;
         } else {
-            nombre = Integer.sum(nombre, 1);
+            number = Integer.sum(number, 1);
         }
-        mapAnnotationsTrouvees.put(nomAnnotation, nombre);
+        mapAnnotationsFound.put(annotationName, number);
     }
 
-    private static Element docParClasse(Document document, ClassDoc classeDoc) {
-        Element elmClasse = document.createElement(TAG_XML.CLASSE);
-        elmClasse.setAttribute(ATTRIBUT_XML.NOM, classeDoc.name());
+    private static Element docByClass(Document document, ClassDoc classDoc) {
+        Element elementClass = document.createElement(TAG_XML.CLASS);
+        elementClass.setAttribute(ATTRIBUTE_XML.NAME, classDoc.name());
 
-        Arrays.stream(classeDoc.methods()) //
-                .map(methodDoc -> docParMethode(document, methodDoc)) //
+        Arrays.stream(classDoc.methods()) //
+                .map(methodDoc -> docByMethod(document, methodDoc)) //
                 .filter(Objects::nonNull) //
-                .forEach(elmClasse::appendChild);
+                .forEach(elementClass::appendChild);
 
-        return elmClasse.getChildNodes().getLength() > 0 ? elmClasse : null;
+        return elementClass.getChildNodes().getLength() > 0 ? elementClass : null;
     }
 
-    private static Element docParMethode(final Document document, final MethodDoc method) {
-        final Element elmMethode = document.createElement(TAG_XML.FONCTION);
+    private static Element docByMethod(final Document document, final MethodDoc method) {
+        final Element elementMethod = document.createElement(TAG_XML.FUNCTION);
         if (method.annotations() != null && method.annotations().length > 0) {
-            elmMethode.setAttribute(ATTRIBUT_XML.NOM, method.name());
+            elementMethod.setAttribute(ATTRIBUTE_XML.NAME, method.name());
 
             Arrays.stream(method.annotations()) //
-                    .map(annotationDesc -> docParAnnotation(document, elmMethode, annotationDesc, method.parameters())) //
+                    .map(annotationDesc -> docByAnnotation(document, elementMethod, annotationDesc, method.parameters())) //
                     .filter(Objects::nonNull) //
-                    .forEach(elmMethode::appendChild);
+                    .forEach(elementMethod::appendChild);
 
-            if (elmMethode.getChildNodes().getLength() > 0) {
-                docParParametre(document, elmMethode, method.parameters());
-                docParCommentaire(document, elmMethode, method.commentText());
-                docParParametreTag(document, elmMethode, method.paramTags());
-                docParTag(document, elmMethode, method.tags(EXAMPLE));
-                return elmMethode;
+            if (elementMethod.getChildNodes().getLength() > 0) {
+                docByParameter(document, elementMethod, method.parameters());
+                docByComments(document, elementMethod, method.commentText());
+                docByParameterTag(document, elementMethod, method.paramTags());
+                docByTag(document, elementMethod, method.tags(EXAMPLE));
+                return elementMethod;
             }
         }
 
         return null;
     }
 
-    private static void docParParametre(Document document, Element elmMethode, Parameter[] parameters) {
+    private static void docByParameter(Document document, Element elementMethod, Parameter[] parameters) {
         for (Parameter parameter : parameters) {
             Element elmTag = document.createElement(TAG_XML.PARAM);
-            elmTag.setAttribute(ATTRIBUT_XML.NOM, parameter.name());
-            elmTag.setAttribute(ATTRIBUT_XML.TYPE, parameter.typeName());
-            elmMethode.appendChild(elmTag);
+            elmTag.setAttribute(ATTRIBUTE_XML.NAME, parameter.name());
+            elmTag.setAttribute(ATTRIBUTE_XML.TYPE, parameter.typeName());
+            elementMethod.appendChild(elmTag);
         }
     }
 
-    private static Element docParCommentaire(Document document, final Element elmMethode, final String commentaire) {
-        if (Util.isNotNullAndNotEmpty(commentaire)) {
-            Element elmCommentaire = document.createElement(TAG_XML.COMMENTAIRE);
-            String[] lignesCommentaire = commentaire.split(SAUT_DE_LIGNE);
-            for (String ligne : lignesCommentaire) {
-                Element elmLigne = document.createElement(TAG_XML.LIGNE);
-                elmLigne.setTextContent(ligne.replace("\"", "\\\""));
-                elmCommentaire.appendChild(elmLigne);
+    private static Element docByComments(Document document, final Element elmMethod, final String comment) {
+        if (Util.isNotNullAndNotEmpty(comment)) {
+            Element elementComment = document.createElement(TAG_XML.COMMENT);
+            String[] commentLines = comment.split(LINE_BREAK);
+            for (String line : commentLines) {
+                Element elmLine = document.createElement(TAG_XML.LINE);
+                elmLine.setTextContent(line.replace("\"", "\\\""));
+                elementComment.appendChild(elmLine);
             }
-            elmMethode.appendChild(elmCommentaire);
+            elmMethod.appendChild(elementComment);
         }
 
-        return elmMethode;
+        return elmMethod;
     }
 
-    private static void docParParametreTag(Document document, Element elmMethode, ParamTag[] paramTags) {
+    private static void docByParameterTag(Document document, Element elmMethod, ParamTag[] paramTags) {
         for (ParamTag tag : paramTags) {
             Element elmTag = document.createElement(TAG_XML.TAG);
-            elmTag.setAttribute(ATTRIBUT_XML.NOM, tag.name().replaceAll("@", ""));
-            elmTag.setAttribute(ATTRIBUT_XML.NOM_PARAMETRE, tag.parameterName());
+            elmTag.setAttribute(ATTRIBUTE_XML.NAME, tag.name().replaceAll("@", ""));
+            elmTag.setAttribute(ATTRIBUTE_XML.NAME_PARAMETER, tag.parameterName());
 
-            String[] lignesCommentaireTag = tag.parameterComment().split(SAUT_DE_LIGNE);
-            for (String ligne : lignesCommentaireTag) {
-                Element elmLigne = document.createElement(TAG_XML.LIGNE);
-                elmLigne.setTextContent(ligne);
-                elmTag.appendChild(elmLigne);
+            String[] comment = tag.parameterComment().split(LINE_BREAK);
+            for (String line : comment) {
+                Element elmLine = document.createElement(TAG_XML.LINE);
+                elmLine.setTextContent(line);
+                elmTag.appendChild(elmLine);
             }
-            elmMethode.appendChild(elmTag);
+            elmMethod.appendChild(elmTag);
         }
     }
 
-    private static void docParTag(Document document, Element elmMethode, Tag[] tags) {
+    private static void docByTag(Document document, Element elmMethod, Tag[] tags) {
         for (Tag tag : tags) {
             Element elmTag = document.createElement(TAG_XML.TAG);
-            elmTag.setAttribute(ATTRIBUT_XML.NOM, tag.name().replace("@", ""));
+            elmTag.setAttribute(ATTRIBUTE_XML.NAME, tag.name().replace("@", ""));
 
-            String[] lignesCommentaireTag = tag.text().split(SAUT_DE_LIGNE);
-            for (String ligne : lignesCommentaireTag) {
-                Element elmLigne = document.createElement(TAG_XML.LIGNE);
-                elmLigne.setTextContent(ligne);
-                elmTag.appendChild(elmLigne);
+            String[] comment = tag.text().split(LINE_BREAK);
+            for (String line : comment) {
+                Element elmLine = document.createElement(TAG_XML.LINE);
+                elmLine.setTextContent(line);
+                elmTag.appendChild(elmLine);
             }
-            elmMethode.appendChild(elmTag);
+            elmMethod.appendChild(elmTag);
         }
     }
 
-    private static Element docParAnnotation(final Document document, final Element elmFonction,
-                                            final AnnotationDesc annotation, final Parameter[] parametres) {
-        String nomAnnotation = annotation.annotationType().simpleTypeName();
+    private static Element docByAnnotation(final Document document, final Element elmFunction,
+                                           final AnnotationDesc annotation, final Parameter[] parameters) {
+        String annotationName = annotation.annotationType().simpleTypeName();
 
-        if (!ANNOTATIONS_INCLUSES.contains(nomAnnotation)) {
+        if (!ANNOTATIONS_INCLUDED.contains(annotationName)) {
             return null;
         }
-        if (Objects.equals(nomAnnotation, DEPRECATED)) {
-            elmFonction.setAttribute(ATTRIBUT_XML.DEPRECATED, "true");
-            ajouterNouvellePhraseDansMapAnnotation(DEPRECATED);
+        if (Objects.equals(annotationName, DEPRECATED)) {
+            elmFunction.setAttribute(ATTRIBUTE_XML.DEPRECATED, "true");
+            addNewPhraseInMapAnnotation(DEPRECATED);
             return null;
         } else {
             final Element elmAnnotation = document.createElement(TAG_XML.ANNOTATION);
-            elmAnnotation.setAttribute(ATTRIBUT_XML.NOM, nomAnnotation);
+            elmAnnotation.setAttribute(ATTRIBUTE_XML.NAME, annotationName);
             Arrays.stream(annotation.elementValues()) //
-                    .map(Cucumber::docParContenuAnnotation).filter(Util::isNotNullAndNotEmpty) //
+                    .map(Cucumber::docByAnnotationContent).filter(Util::isNotNullAndNotEmpty) //
                     .forEach(phrase -> {
                         phrase = phrase.replace("\"", "\\\"");
-                        elmAnnotation.setAttribute(ATTRIBUT_XML.PHRASE, phrase);
-                        creerListeChoixPhrase(document, elmAnnotation, phrase, parametres);
+                        elmAnnotation.setAttribute(ATTRIBUTE_XML.PHRASE, phrase);
+                        createListOfPossiblePhrases(document, elmAnnotation, phrase, parameters);
                     });
 
-            if (elmAnnotation.getAttribute(ATTRIBUT_XML.PHRASE) != null) {
-                ajouterNouvellePhraseDansMapAnnotation(nomAnnotation);
+            if (elmAnnotation.getAttribute(ATTRIBUTE_XML.PHRASE) != null) {
+                addNewPhraseInMapAnnotation(annotationName);
                 return elmAnnotation;
             }
             return null;
         }
     }
 
-    private static void creerListeChoixPhrase(Document document, Element elmAnnotation, String phrase,
-                                              Parameter[] parametres) {
-        final List<String> listePhrasesPossibles = Util.extraireListePhrases(phrase);
-        if (!listePhrasesPossibles.isEmpty()) {
-            for (final String phrasePossible : listePhrasesPossibles) {
+    private static void createListOfPossiblePhrases(Document document, Element elmAnnotation, String phrase,
+                                                    Parameter[] parameters) {
+        final List<String> possiblePhrases = Util.extractPhrasesList(phrase);
+        if (!possiblePhrases.isEmpty()) {
+            for (final String possiblePhrase : possiblePhrases) {
                 Element elm = document.createElement(TAG_XML.PHRASE);
-                elm.setTextContent(Util.ajoutParametreDansPhrasePossible(phrasePossible, parametres));
+                elm.setTextContent(Util.additionParameterInPossiblePhrase(possiblePhrase, parameters));
                 elmAnnotation.appendChild(elm);
             }
         }
     }
 
-    private static String docParContenuAnnotation(ElementValuePair elementValuePair) {
+    private static String docByAnnotationContent(ElementValuePair elementValuePair) {
         String phrase = null;
-        if (ATTRIBUT_XML.VALUE.equals(elementValuePair.element().name())) {
+        if (ATTRIBUTE_XML.VALUE.equals(elementValuePair.element().name())) {
             AnnotationValue annotationValue = elementValuePair.value();
             if (annotationValue != null) {
                 phrase = annotationValue.value().toString();
@@ -271,85 +271,85 @@ public class Cucumber {
         return phrase;
     }
 
-    private static void creerFichiersSortiesViaTransformers(final String transformers, final Document document) throws DocletCucumberException {
+    private static void createOutputFileViaTransformers(final String transformers, final Document document) throws DocletCucumberException {
         if (transformers != null) {
-            String[] listeTransformers = transformers.split(SEPARATEUR);
-            for (String transformer : listeTransformers) {
-                System.out.println("Début de la génération depuis le Transformer : " + transformer);
+            String[] transformersList = transformers.split(SEPARATOR);
+            for (String transformer : transformersList) {
+                System.out.println("Beginning of the generation since the Transformer : " + transformer);
                 try {
                     Class classTransformer = Class.forName(transformer);
                     if (DocletTransformer.class.isAssignableFrom(classTransformer)) {
                         DocletTransformer transformerInstance = DocletTransformer.class.cast(classTransformer.newInstance());
 
-                        String repertoireDeSortie = listeOptions.get(Option.OUT);
-                        repertoireDeSortie = repertoireDeSortie == null ? "" : repertoireDeSortie + File.separator;
-                        transformerInstance.setRepertoireDeSortie(repertoireDeSortie);
+                        String outputDirectory = listOptions.get(Option.OUT);
+                        outputDirectory = outputDirectory == null ? "" : outputDirectory + File.separator;
+                        transformerInstance.setOutputDirectory(outputDirectory);
 
-                        transformerInstance.genererCucumberDoc(document);
+                        transformerInstance.generateCucumberDoc(document);
                     }
                 } catch (ClassNotFoundException e) {
-                    System.out.println("la classe de transformation '" + transformer + "' n'a pas été trouvée.");
+                    System.out.println("the transformation class '" + transformer + "' was not found.");
                 } catch (IllegalAccessException | InstantiationException e) {
-                    System.out.println("Impossible d'instancier la classe de transformation '" + transformer + "'.");
+                    System.out.println("Can not instantiate transformation class '" + transformer + "'.");
                 }
             }
         }
     }
 
-    private static void creerFichiersSorties(Document document) throws DocletCucumberException {
+    private static void createOutputFile(Document document) throws DocletCucumberException {
         try {
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             final Transformer transformerXML = transformerFactory.newTransformer();
 
-            final boolean sortieHtml = listeOptions.containsKey(Option.HTML);
-            final boolean sortieTxt = listeOptions.containsKey(Option.TXT);
-            final boolean sortieXml = listeOptions.containsKey(Option.XML);
+            final boolean html = listOptions.containsKey(Option.HTML);
+            final boolean txt = listOptions.containsKey(Option.TXT);
+            final boolean xml = listOptions.containsKey(Option.XML);
 
-            String cheminCompletXslVersHtml = listeOptions.get(Option.XSL_HTML);
-            if (Util.isNullOrEmpty(cheminCompletXslVersHtml)) {
-                cheminCompletXslVersHtml = FICHIER_XSL_XML_VERS_HTML_DEFAUT;
+            String completePathXslToHtml = listOptions.get(Option.XSL_HTML);
+            if (Util.isNullOrEmpty(completePathXslToHtml)) {
+                completePathXslToHtml = FILE_XSL_XML_VERS_HTML_DEFAULT;
             }
-            String cheminCompletXslVersText = listeOptions.get(Option.XSL_TXT);
-            if (Util.isNullOrEmpty(cheminCompletXslVersText)) {
-                cheminCompletXslVersText = FICHIER_XSL_XML_VERS_TXT_DEFAUT;
+            String completePathXslToText = listOptions.get(Option.XSL_TXT);
+            if (Util.isNullOrEmpty(completePathXslToText)) {
+                completePathXslToText = FILE_XSL_XML_VERS_TXT_DEFAULT;
             }
 
             final DOMSource source = new DOMSource(document);
 
-            String nomFichierSortie = listeOptions.get(Option.NAME);
-            if (Util.isNullOrEmpty(nomFichierSortie)) {
-                nomFichierSortie = NOM_FICHIER_SORTIE_PAR_DEFAUT;
+            String outputFileName = listOptions.get(Option.NAME);
+            if (Util.isNullOrEmpty(outputFileName)) {
+                outputFileName = DEFAULT_OUTPUT_FILE_NAME;
             }
-            String cheminComplet = listeOptions.get(Option.OUT);
-            if (cheminComplet == null) {
-                cheminComplet = "";
-            }
-
-            if (sortieXml || (!sortieHtml && !sortieTxt)) {
-                Path pathFichierXml = Paths.get(cheminComplet, nomFichierSortie + ".xml");
-                final StreamResult sortieXML = new StreamResult(pathFichierXml.toFile());
-                transformerXML.transform(source, sortieXML);
-                System.out.println("Fichier '" + pathFichierXml + "' créé.");
+            String fullPath = listOptions.get(Option.OUT);
+            if (fullPath == null) {
+                fullPath = "";
             }
 
-            if (sortieHtml) {
-                StreamSource stylesource = new StreamSource(new File(cheminCompletXslVersHtml));
+            if (xml || (!html && !txt)) {
+                Path xmlFilePath = Paths.get(fullPath, outputFileName + ".xml");
+                final StreamResult xmlOutput = new StreamResult(xmlFilePath.toFile());
+                transformerXML.transform(source, xmlOutput);
+                System.out.println("File '" + xmlFilePath + "' created.");
+            }
+
+            if (html) {
+                StreamSource stylesource = new StreamSource(new File(completePathXslToHtml));
                 final Transformer transformerHTML = transformerFactory.newTransformer(stylesource);
-                final Path pathfichierHtml = Paths.get(cheminComplet, nomFichierSortie + ".html");
-                final StreamResult sortieHTML = new StreamResult(pathfichierHtml.toFile());
-                transformerHTML.transform(source, sortieHTML);
-                System.out.println("Fichier '" + pathfichierHtml + "' créé.");
+                final Path pathToHtmlFile = Paths.get(fullPath, outputFileName + ".html");
+                final StreamResult htmlOutput = new StreamResult(pathToHtmlFile.toFile());
+                transformerHTML.transform(source, htmlOutput);
+                System.out.println("File '" + pathToHtmlFile + "' created.");
             }
-            if (sortieTxt) {
-                StreamSource stylesource = new StreamSource(new File(cheminCompletXslVersText));
+            if (txt) {
+                StreamSource stylesource = new StreamSource(new File(completePathXslToText));
                 final Transformer transformerTXT = transformerFactory.newTransformer(stylesource);
-                final Path pathFichierTxt = Paths.get(cheminComplet, nomFichierSortie + ".txt");
-                final StreamResult sortieTXT = new StreamResult(pathFichierTxt.toFile());
-                transformerTXT.transform(source, sortieTXT);
-                System.out.println("Fichier '" + pathFichierTxt + "' créé.");
+                final Path txtFilePath = Paths.get(fullPath, outputFileName + ".txt");
+                final StreamResult txtOutput = new StreamResult(txtFilePath.toFile());
+                transformerTXT.transform(source, txtOutput);
+                System.out.println("File '" + txtFilePath + "' created.");
             }
         } catch (TransformerException e) {
-            throw new DocletCucumberException("Erreur la préparation du fichier de sortie", e);
+            throw new DocletCucumberException("Error preparing the output file", e);
         }
     }
 }

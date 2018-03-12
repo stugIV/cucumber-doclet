@@ -11,11 +11,11 @@
 	</xsl:template>
 
 	<xsl:template match="JAVADOC">
-		<html lang="fr">
+		<html lang="en">
 			<head>
 				<meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<title>Liste des phrases exécutables Cucumber du projet PrestationBack</title>
+				<title>List of all executable sentences</title>
 				<link rel="stylesheet"
 					href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
 				<link rel="stylesheet" href="/resources/demos/style.css" />
@@ -25,25 +25,25 @@
 					$( function() {
 						function Annotation () {
 							this.id = "";
-							this.commentaires = new Array();
-							this.exemples = new Array();
-							this.classe = "";
-							this.fonction = "";
+							this.comments = new Array();
+							this.examples = new Array();
+							this.class = "";
+							this.function = "";
 							this.params = new Array();
-							this.libelle = "";
+							this.label = "";
   							this.phrases = new Array();
   							this.deprecated = false;
 						}
 						function Param () {
-							this.libelle = "";
+							this.label = "";
 							this.type = "";
 						}
 
 						var annotations = new Array();
 						
-						<xsl:apply-templates select="CLASSE"  mode="script" />
+						<xsl:apply-templates select="CLASS"  mode="script" />
 				
-						function afficherPhrase(result, annotation) {
+						function viewPhrase(result, annotation) {
 							result.empty();
 							newH3 = document.createElement( "h3" );
 							if (annotation.deprecated) {
@@ -56,10 +56,10 @@
 							result.append(newH3);
 
 							newP = document.createElement( "p" );
-							annotation.commentaires.forEach(function(commentaire) {
+							annotation.comments.forEach(function(comment) {
 								newI = document.createElement( "i" );
 								newBR = document.createElement( "br" );
-								newI.append(commentaire);
+								newI.append(comment);
 								newP.append(newI);
 								newP.append(newBR);
 							});
@@ -68,7 +68,7 @@
 							newP = document.createElement( "p" );
 							newU = document.createElement( "u" );
 							newB = document.createElement( "b" );
-							newB.append("Liste des phrases possibles :");
+							newB.append("List of possible phrases :");
 							newU.append(newB);
 							newP.append(newU)				
 							result.append(newP);
@@ -84,17 +84,17 @@
 							newP = document.createElement( "p" );
 							newU = document.createElement( "u" );
 							newB = document.createElement( "b" );
-							newB.append("Exemple :");
+							newB.append("Example :");
 							newU.append(newB);
 							newP.append(newU)
 							result.append(newP);
 							
 							newDIV = document.createElement( "div" );
-							newDIV.id = "divExemple";
+							newDIV.id = "divExample";
 							newP = document.createElement( "p" );
-							annotation.exemples.forEach(function(exemple) {
+							annotation.examples.forEach(function(example) {
 								newBR = document.createElement( "br" );
-								newP.append(exemple.replace(/ /g, "&#160;"));
+								newP.append(example.replace(/ /g, "&#160;"));
 								newP.append(newBR);
 							});
 							newDIV.append(newP);
@@ -106,7 +106,7 @@
 					    $( "#phrases" ).autocomplete({
 						      source: Object.values(annotations),
       						      select: function( event, ui ) {
-										afficherPhrase($( "#divDetailRecherche" ), annotations[ui.item.id]);
+											viewPhrase($( "#divDetailResearch" ), annotations[ui.item.id]);
 										$(this).val(''); return false;
 								 }
 						})
@@ -114,7 +114,7 @@
 						$( "#menu" ).menu(
 							{ items: "> :not(.ui-widget-header)"},
 							{ select: function( event, ui ) {
-								afficherPhrase($( "#divDetail" ), annotations[ui.item.context.id]); }
+								viewPhrase($( "#divDetail" ), annotations[ui.item.context.id]); }
 							}
 						);
 						
@@ -127,26 +127,26 @@
 					#tabs { height:46em; }
 					#divMenu { float:left; height: 37em; overflow-y:auto;overflow-x:hidden; }
 					#divDetail { float:left; border: 1px black solid; margin: 0 1em 0 1em; padding:0 0.5em 0 0.5em;width:41em;overflow-x:hidden; }
-					#divDetailRecherche { border: 1px black solid; margin: 1em 1em 0 1em; padding:0 0.5em 0 0.5em;overflow-x:hidden; }
-					#divExemple { font-family:Courier New; font-size:small; }
+					#divDetailResearch { border: 1px black solid; margin: 1em 1em 0 1em; padding:0 0.5em 0 0.5em;overflow-x:hidden; }
+					#divExample { font-family:Courier New; font-size:small; }
 				</style>
 			</head>
 			<body>
 				<div id="tabs">
 					<ul>
-						<li><a href="#tabs-1">Recherche</a></li>
-						<li><a href="#tabs-2">Liste</a></li>
+						<li><a href="#tabs-1">Search</a></li>
+						<li><a href="#tabs-2">List</a></li>
 					</ul>
 					<div id="tabs-1" class="ui-widget">
-						<label for="phrases">Rechercher une phrase : </label>
+						<label for="phrases">Search a sentence : </label>
   						<input id="phrases" />
-						<div id="divDetailRecherche" />
+						<div id="divDetailResearch" />
 					</div>
 					<div id="tabs-2">
-						<h1>Liste des phrases exécutables Cucumber du projet PrestationBack</h1>
+						<h1>List of executable sentences</h1>
 						<div id="divMenu">
 							<ul id="menu">
-								<xsl:apply-templates select="CLASSE"  mode="html" />
+								<xsl:apply-templates select="CLASS"  mode="html" />
 							</ul>
 						</div>
 						<div id="divDetail" />
@@ -155,88 +155,88 @@
 			</body>
 		</html>
 	</xsl:template>
-	<xsl:template match="CLASSE" mode="html">
+	<xsl:template match="CLASS" mode="html">
 		<li class="ui-widget-header">
 			<div>
-				<xsl:value-of select="@nom" />
+				<xsl:value-of select="@name" />
 			</div>
 		</li>
-		<xsl:apply-templates select="FONCTION" mode="html">
-			<xsl:with-param name="classePosition" select="position()" />
+		<xsl:apply-templates select="FUNCTION" mode="html">
+			<xsl:with-param name="classPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
-	<xsl:template match="FONCTION" mode="html">
-	<xsl:param name="classePosition" />
-		<li><xsl:attribute name="id">idAnnotation-<xsl:value-of select="$classePosition" />-<xsl:value-of select="position()" /></xsl:attribute>
+	<xsl:template match="FUNCTION" mode="html">
+	<xsl:param name="classPosition" />
+		<li><xsl:attribute name="id">idAnnotation-<xsl:value-of select="$classPosition" />-<xsl:value-of select="position()" /></xsl:attribute>
 			<xsl:apply-templates select="ANNOTATION"  mode="html" />
 		</li>
 	</xsl:template>
 	<xsl:template match="ANNOTATION" mode="html">
-		<xsl:variable name= "nomPhrase">
-			<b><xsl:value-of select="@nom" /></b>
+		<xsl:variable name= "phraseName">
+			<b><xsl:value-of select="@name" /></b>
 			&#160;
 			<i><xsl:value-of select="translate(PHRASE,'\','')" /></i>
 		</xsl:variable>
 		<div>
 			<xsl:choose>
 			  <xsl:when test="../@Deprecated">
-			    <s><xsl:copy-of select="$nomPhrase" /></s>
+			    <s><xsl:copy-of select="$phraseName" /></s>
 			  </xsl:when>
 			  <xsl:otherwise>
-			    <xsl:copy-of select="$nomPhrase" />
+			    <xsl:copy-of select="$phraseName" />
 			  </xsl:otherwise>
 			</xsl:choose> 
 		</div>
 	</xsl:template>
 
-	<xsl:template match="CLASSE" mode="script">
-		<xsl:apply-templates select="FONCTION" mode="script">
-			<xsl:with-param name="classePosition" select="position()" />
+	<xsl:template match="CLASS" mode="script">
+		<xsl:apply-templates select="FUNCTION" mode="script">
+			<xsl:with-param name="classPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
-	<xsl:template match="FONCTION" mode="script">
-	<xsl:param name="classePosition" />
+	<xsl:template match="FUNCTION" mode="script">
+	<xsl:param name="classPosition" />
 		<xsl:apply-templates select="ANNOTATION" mode="script">
-			<xsl:with-param name="idAnnotation" select="concat('idAnnotation-',$classePosition,'-',position())" />
+			<xsl:with-param name="idAnnotation" select="concat('idAnnotation-',$classPosition,'-',position())" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="ANNOTATION" mode="script">
 	<xsl:param name="idAnnotation" />
 		var annotation = new Annotation;
-		annotation.classe = "<xsl:value-of select="../../@nom" />";
-		annotation.fonction = "<xsl:value-of select="../@nom" />";
+		annotation.class = "<xsl:value-of select="../../@name" />";
+		annotation.function = "<xsl:value-of select="../@name" />";
 
 	    <xsl:if test="../@Deprecated">
 	    	annotation.deprecated = true;
 	    </xsl:if>
 		
-		<xsl:apply-templates select="../COMMENTAIRE" mode="script" />		
-		<xsl:apply-templates select="../TAG[@nom='example']" mode="script" />		
+		<xsl:apply-templates select="../COMMENT" mode="script" />
+		<xsl:apply-templates select="../TAG[@name='example']" mode="script" />
 		<xsl:apply-templates select="PARAM" mode="script" />
-		annotation.libelle = "<xsl:value-of select="concat(@nom,' ',@phrase)" />";
+		annotation.label = "<xsl:value-of select="concat(@name,' ',@phrase)" />";
 		annotation.id = "<xsl:value-of select="$idAnnotation" />";
-		annotation.label = "<xsl:value-of select="concat(@nom,' ',PHRASE)" />";
+		annotation.label = "<xsl:value-of select="concat(@name,' ',PHRASE)" />";
 		annotations[annotation.id] = annotation;
 		<xsl:apply-templates select="PHRASE" mode="script" />		
 	</xsl:template>
-	<xsl:template match="COMMENTAIRE" mode="script">	
-		<xsl:for-each select="LIGNE">
-			annotation.commentaires.push("<xsl:value-of select="." />");
+	<xsl:template match="COMMENT" mode="script">
+		<xsl:for-each select="LINE">
+			annotation.comments.push("<xsl:value-of select="." />");
 		</xsl:for-each> 
 	</xsl:template>
 	<xsl:template match="TAG" mode="script">
-		<xsl:for-each select="LIGNE">
-			annotation.exemples.push("<xsl:value-of select="." />");
+		<xsl:for-each select="LINE">
+			annotation.examples.push("<xsl:value-of select="." />");
 		</xsl:for-each> 
 	</xsl:template>
 	<xsl:template match="PARAM" mode="script">
 		var param = new Param;
-		param.libelle = "<xsl:value-of select="@nom" />;
+		param.label = "<xsl:value-of select="@name" />;
 		param.type = "<xsl:value-of select="@type" />;
 		annotation.params.push(param);
 	</xsl:template>
 	<xsl:template match="PHRASE" mode="script">
-		annotation.phrases.push("<xsl:value-of select="concat(../@nom,' ', .)" />");
+		annotation.phrases.push("<xsl:value-of select="concat(../@name,' ', .)" />");
 	</xsl:template>
 
 </xsl:stylesheet>

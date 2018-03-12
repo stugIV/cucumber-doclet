@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Create class inherit from this interface to generate your own rapport.
+ * Create class inherit from this interface to generate your own report.
  * <p>
  * Don't forget to put the '-t yourTransformerClass' when you call javadoc exe
  *
@@ -22,83 +22,83 @@ import java.util.List;
  */
 public abstract class DocletTransformer {
 
-    private String repertoireDeSortie;
+    private String outputDirectory;
 
     private final XPath xpath = XPathFactory.newInstance().newXPath();
 
     protected static class TAG_XML {
-        public static final String RACINE = "JAVADOC";
-        public static final String CLASSE = "CLASSE";
-        public static final String FONCTION = "FONCTION";
+        public static final String ROOT = "JAVADOC";
+        public static final String CLASS = "CLASS";
+        public static final String FUNCTION = "FUNCTION";
         public static final String ANNOTATION = "ANNOTATION";
-        public static final String COMMENTAIRE = "COMMENTAIRE";
+        public static final String COMMENT = "COMMENT";
         public static final String PARAM = "PARAM";
         public static final String PHRASE = "PHRASE";
-        public static final String LIGNE = "LIGNE";
+        public static final String LINE = "LINE";
         public static final String TAG = "TAG";
         public static final String RESUME = "RESUME";
     }
 
-    public static class ATTRIBUT_XML {
+    public static class ATTRIBUTE_XML {
         public static final String VERSION = "docletVersion";
         public static final String DATE = "date";
-        public static final String NOM = "nom";
+        public static final String NAME = "name";
         public static final String PHRASE = "phrase";
         public static final String VALUE = "value";
         public static final String TYPE = "type";
-        public static final String NOM_PARAMETRE = "nomParametre";
+        public static final String NAME_PARAMETER = "nameParameter";
         public static final String DEPRECATED = "Deprecated";
-        public static final String NOMBRE_PHRASE = "nbPhrases";
+        public static final String NAME_PHRASE = "namePhrases";
     }
 
-    protected void setRepertoireDeSortie(String repertoireDeSortie) {
-        this.repertoireDeSortie = repertoireDeSortie;
+    protected void setOutputDirectory(String outputDirectory) {
+        this.outputDirectory = outputDirectory;
     }
 
-    protected String getRepertoireDeSortie() {
-        return repertoireDeSortie;
+    protected String getOutputDirectory() {
+        return outputDirectory;
     }
 
     /**
-     * Permet de définir le nom du fichier de sortie
+     * Define the name of the output file
      *
-     * @return le nom du fichier de sortie avec son extension
+     * @return the name of the output file with its extension
      */
-    public abstract String getNomFichier();
+    public abstract String getFileName();
 
-    protected void genererCucumberDoc(Document document) throws DocletCucumberException {
+    protected void generateCucumberDoc(Document document) throws DocletCucumberException {
 
 
-        File fichier = new File(getRepertoireDeSortie() + getNomFichier());
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(fichier));
+        File file = new File(getOutputDirectory() + getFileName());
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
              PrintWriter printer = new PrintWriter(bufferedWriter)) {
-            genererCucumberDoc(document.getDocumentElement(), printer);
+            generateCucumberDoc(document.getDocumentElement(), printer);
         } catch (IOException e) {
-            throw new DocletCucumberException("Erreur durant la création du fichier : " + e.getMessage(), e);
+            throw new DocletCucumberException("Error during file creation : " + e.getMessage(), e);
         }
-        System.out.println("Fichier Généré via " + this.getClass().getSimpleName() + " : " + getNomFichier() + " a été créé.");
+        System.out.println("Generated file via " + this.getClass().getSimpleName() + " : " + getFileName() + " has been created.");
     }
 
     /**
-     * Cette méthode est a surcharger pour créer le fichier de sortie à partir du Document dom xml
+     * This method is overloaded to create the output file from the Document dom xml
      *
-     * @param elementRacine - l'élément racine du flux XML contenant la cucumber doc
-     * @param printer       - le printer pour écrire dans le fichier
-     * @throws DocletCucumberException en cas d'erreur durant la generation du fichier
+     * @param rootElement - the root element of the XML feed containing the cucumber doc
+     * @param printer       - the printer to write to the file
+     * @throws DocletCucumberException in case of error during file generation
      */
-    public abstract void genererCucumberDoc(final Element elementRacine, final PrintWriter printer) throws DocletCucumberException;
+    public abstract void generateCucumberDoc(final Element rootElement, final PrintWriter printer) throws DocletCucumberException;
 
     /**
-     * Cette méthode permet de lancer une évaluation d'une expression Xpath sur le noeud courant
+     * This method starts an evaluation of an Xpath expression on the current node
      *
-     * @param expression  - l'expression Xpath
-     * @param nodeCourant - le noeud Xml courant
-     * @return la liste des Elements résultants de l'expression
+     * @param expression  - expression Xpath
+     * @param currentNode - the current Xml node
+     * @return the list of the elements resulting from the expression
      */
-    public List<Element> evaluerExpressionXpath(final String expression, final Node nodeCourant) {
+    public List<Element> evaluateExpressionXpath(final String expression, final Node currentNode) {
         List<Element> listeElements = new ArrayList<>();
         try {
-            NodeList resultats = (NodeList) xpath.evaluate(expression, nodeCourant, XPathConstants.NODESET);
+            NodeList resultats = (NodeList) xpath.evaluate(expression, currentNode, XPathConstants.NODESET);
             for (int index = 0; index < resultats.getLength(); index++) {
                 Node item = resultats.item(index);
                 if (Element.class.isAssignableFrom(item.getClass())) {

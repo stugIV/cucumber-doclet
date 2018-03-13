@@ -162,11 +162,13 @@
 			</div>
 		</li>
 		<xsl:apply-templates select="CLASS" mode="group">
+			<xsl:with-param name="groupPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="CLASS" mode="group">
+		<xsl:param name="groupPosition"/>
 		<xsl:apply-templates select="FUNCTION" mode="html">
-			<xsl:with-param name="classPosition" select="position()" />
+			<xsl:with-param name="classPosition" select="$groupPosition" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="CLASS" mode="html">
@@ -187,7 +189,9 @@
 	</xsl:template>
 	<xsl:template match="ANNOTATION" mode="html">
 		<xsl:variable name= "phraseName">
-			<b><xsl:value-of select="@phrase" /></b>
+			<b><xsl:value-of select="@name" /></b>
+			&#160;
+			<i><xsl:value-of select="@phrase" /></i>
 		</xsl:variable>
 		<div>
 			<xsl:choose>

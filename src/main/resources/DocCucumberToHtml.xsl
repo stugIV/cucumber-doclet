@@ -168,7 +168,8 @@
 	<xsl:template match="CLASS" mode="group">
 		<xsl:param name="groupPosition"/>
 		<xsl:apply-templates select="FUNCTION" mode="html">
-			<xsl:with-param name="classPosition" select="$groupPosition" />
+			<xsl:with-param name="groupPosition" select="$groupPosition" />
+			<xsl:with-param name="classPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="CLASS" mode="html">
@@ -182,8 +183,9 @@
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="FUNCTION" mode="html">
+	<xsl:param name="groupPosition" />
 	<xsl:param name="classPosition" />
-		<li><xsl:attribute name="id">idAnnotation-<xsl:value-of select="$classPosition" />-<xsl:value-of select="position()" /></xsl:attribute>
+		<li><xsl:attribute name="id">idAnnotation-<xsl:value-of select="$groupPosition" />-<xsl:value-of select="$classPosition" />-<xsl:value-of select="position()" /></xsl:attribute>
 			<xsl:apply-templates select="ANNOTATION"  mode="html" />
 		</li>
 	</xsl:template>
@@ -207,17 +209,21 @@
 
 	<xsl:template match="GROUP" mode="script">
 		<xsl:apply-templates select="CLASS" mode="script">
+			<xsl:with-param name="groupPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="CLASS" mode="script">
+		<xsl:param name="groupPosition"/>
 		<xsl:apply-templates select="FUNCTION" mode="script">
+			<xsl:with-param name="groupPosition" select="$groupPosition" />
 			<xsl:with-param name="classPosition" select="position()" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="FUNCTION" mode="script">
+	<xsl:param name="groupPosition" />
 	<xsl:param name="classPosition" />
 		<xsl:apply-templates select="ANNOTATION" mode="script">
-			<xsl:with-param name="idAnnotation" select="concat('idAnnotation-',$classPosition,'-',position())" />
+			<xsl:with-param name="idAnnotation" select="concat('idAnnotation-',$groupPosition,'-',$classPosition,'-',position())" />
 		</xsl:apply-templates>
 	</xsl:template>
 	<xsl:template match="ANNOTATION" mode="script">

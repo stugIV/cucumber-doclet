@@ -64,41 +64,48 @@
 								newP.append(newBR);
 							});
 							result.append(newP);
+
+							paramsP = document.createElement( "p" );
+							paramsU = document.createElement( "u" );
+							paramsB = document.createElement( "b" );
+							paramsB.append("Params :");
+							paramsU.append(paramsB);
+							paramsP.append(paramsU)
+							result.append(paramsP);
 							
-							newP = document.createElement( "p" );
-							newU = document.createElement( "u" );
-							newB = document.createElement( "b" );
-							newB.append("List of possible phrases :");
-							newU.append(newB);
-							newP.append(newU)				
-							result.append(newP);
-							
-							newUL = document.createElement( "ul" );
-							annotation.phrases.forEach(function(element) {
-								newLI = document.createElement( "li" );
-								newLI.append(element);
-								newUL.append(newLI);
+							paramsDIV = document.createElement( "div" );
+							paramsDIV.id = "divParams";
+							paramP = document.createElement( "p" );
+							annotation.params.forEach(function(param) {
+								paramBR = document.createElement( "br" );
+								paramB = document.createElement("b")
+								paramB.append(param.label);
+								paramP.append(paramB)
+								paramP.append(" - ");
+								paramP.append(param.description);
+								paramP.append(paramBR);
 							});
-							result.append(newUL);
+							paramsDIV.append(paramP);
+							result.append(paramsDIV);
+
+							exampleP = document.createElement( "p" );
+							exampleU = document.createElement( "u" );
+							exampleB = document.createElement( "b" );
+							exampleB.append("Example :");
+							exampleU.append(exampleB);
+							exampleP.append(exampleU)
+							result.append(exampleP);
 							
-							newP = document.createElement( "p" );
-							newU = document.createElement( "u" );
-							newB = document.createElement( "b" );
-							newB.append("Example :");
-							newU.append(newB);
-							newP.append(newU)
-							result.append(newP);
-							
-							newDIV = document.createElement( "div" );
-							newDIV.id = "divExample";
+							exampleDIV = document.createElement( "div" );
+							exampleDIV.id = "divExample";
 							newP = document.createElement( "p" );
 							annotation.examples.forEach(function(example) {
 								newBR = document.createElement( "br" );
 								newP.append(example.replace(/ /g, "&#160;"));
 								newP.append(newBR);
 							});
-							newDIV.append(newP);
-							result.append(newDIV);			
+							exampleDIV.append(newP);
+							result.append(exampleDIV);
 						}
 				
 						$( "#tabs" ).tabs();
@@ -237,7 +244,7 @@
 	    </xsl:if>
 		
 		<xsl:apply-templates select="../COMMENT" mode="script" />
-		<xsl:apply-templates select="../TAG[@name='example']" mode="script" />
+		<xsl:apply-templates select="../TAG" mode="script" />
 		<xsl:apply-templates select="PARAM" mode="script" />
 		annotation.id = "<xsl:value-of select="$idAnnotation" />";
 		annotation.label = "<xsl:value-of select="@phrase" />";
@@ -250,9 +257,21 @@
 		</xsl:for-each> 
 	</xsl:template>
 	<xsl:template match="TAG" mode="script">
-		<xsl:for-each select="LINE">
-			annotation.examples.push("<xsl:value-of select="." />");
-		</xsl:for-each> 
+		<xsl:choose>
+			<xsl:when test="@name='param'">
+				var param = new Param;
+				param.label="<xsl:value-of select="@nameParameter" />";
+				<xsl:for-each select="LINE">
+					param.description="<xsl:value-of select="." />";
+				</xsl:for-each>
+				annotation.params.push(param);
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:for-each select="LINE">
+					annotation.examples.push("<xsl:value-of select="." />");
+				</xsl:for-each>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 	<xsl:template match="PARAM" mode="script">
 		var param = new Param;

@@ -124,18 +124,32 @@
 								viewPhrase($( "#divDetail" ), annotations[ui.item.context.id]); }
 							}
 						);
-						
+						$(".ui-menu-item-wrapper").on('click', function(e) {
+							$('#divDetail').remove();
+							popup = $('<div id="divDetail"></div>');
+							target = this.id;
+							$(this).append(popup);
+						});
 					} );
 				</script>
 				<style>
-					.ui-menu { width: 50em; }
-					.ui-widget-header { padding: 0.2em; }
-					#phrases { width:80em; }
-					#tabs { height:46em; }
-					#divMenu { float:left; height: 37em; overflow-y:auto;overflow-x:hidden; }
-					#divDetail { float:left; border: 1px black solid; margin: 0 1em 0 1em; padding:0 0.5em 0 0.5em;width:41em;overflow-x:hidden; }
-					#divDetailResearch { border: 1px black solid; margin: 1em 1em 0 1em; padding:0 0.5em 0 0.5em;overflow-x:hidden; }
-					#divExample { font-family:Courier New; font-size:small; }
+					#menu .ui-widget-header,
+					#menu .ui-menu-item-wrapper {
+						padding: 5px 20px;
+						font-size: 100%;
+					}
+					.ui-menu li.ui-menu-item:nth-child(2n+1) {
+						background-color: rgba(0,0,0,.03);
+					}
+					#divDetail:not(:empty) {
+						border: 1px solid #dbd3b8;
+						background: #fff7db;
+						color: #000;
+						padding: 0 20px;
+						margin: 5px 0 20px;
+						border-radius: 3px;
+						box-shadow: 0 2px 3px rgba(0, 0, 0, .2);
+					}
 				</style>
 			</head>
 			<body>

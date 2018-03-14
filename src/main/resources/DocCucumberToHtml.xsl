@@ -157,6 +157,8 @@
 					<ul>
 						<li><a href="#tabs-1">Search</a></li>
 						<li><a href="#tabs-2">List</a></li>
+                        <!--<li><a href="#tabs-Person">Person</a></li>-->
+						<xsl:apply-templates select="GROUP" mode="tabs"/>
 					</ul>
 					<div id="tabs-1" class="ui-widget">
 						<label for="phrases">Search a sentence : </label>
@@ -167,15 +169,51 @@
 						<h1>List of executable sentences</h1>
 						<div id="divMenu">
 							<ul id="menu">
-								<xsl:apply-templates select="GROUP"  mode="html" />
+								<xsl:apply-templates select="GROUP" mode="html" />
 							</ul>
 						</div>
 						<div id="divDetail" />
 					</div>
+                    <xsl:apply-templates select="GROUP" mode="desc"/>
 				</div>
 			</body>
 		</html>
 	</xsl:template>
+	<xsl:template match="GROUP" mode="tabs">
+		<xsl:if test="@name='Other'">
+			<xsl:apply-templates select="CLASS" mode="tabs"/>
+		</xsl:if>
+	</xsl:template>
+	<xsl:template match="CLASS" mode="tabs">
+		<li><a><xsl:attribute name="href">#tabs-<xsl:value-of select="@name" /></xsl:attribute>
+			<xsl:value-of select="@name"/>
+		</a></li>
+	</xsl:template>
+    <xsl:template match="GROUP" mode="desc">
+		<xsl:if test="@name='Other'">
+			<xsl:apply-templates select="CLASS" mode="desc"/>
+		</xsl:if>
+    </xsl:template>
+	<xsl:template match="CLASS" mode="desc">
+		<div><xsl:attribute name="id">tabs-<xsl:value-of select="@name" /></xsl:attribute>
+			<div>
+				<h3>Class <xsl:value-of select="@name" /></h3>
+				<h4>Description</h4>
+				<xsl:value-of select="@description"/>
+			</div>
+			<br/>
+			<xsl:apply-templates select="ENUM" mode="desc"/>
+		</div>
+	</xsl:template>
+	<xsl:template match="ENUM" mode="desc">
+		<h4>Possible values</h4>
+		<xsl:apply-templates select="FIELD" mode="desc"/>
+	</xsl:template>
+	<xsl:template match="FIELD" mode="desc">
+		<b><xsl:value-of select="@name"/></b> - <xsl:value-of select="@description"/><br/>
+	</xsl:template>
+
+
 	<xsl:template match="GROUP" mode="html">
 		<li class="ui-widget-header">
 			<div>

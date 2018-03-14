@@ -30,6 +30,8 @@ public abstract class DocletTransformer {
         public static final String ROOT = "JAVADOC";
         public static final String GROUP = "GROUP";
         public static final String CLASS = "CLASS";
+        public static final String ENUM = "ENUM";
+        public static final String FIELD = "FIELD";
         public static final String FUNCTION = "FUNCTION";
         public static final String ANNOTATION = "ANNOTATION";
         public static final String COMMENT = "COMMENT";
@@ -46,6 +48,7 @@ public abstract class DocletTransformer {
         public static final String NAME = "name";
         public static final String PACKAGE = "package";
         public static final String GROUP = "group";
+        public static final String DESCRIPTION = "description";
         public static final String PHRASE = "phrase";
         public static final String VALUE = "value";
         public static final String TYPE = "type";

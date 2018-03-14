@@ -166,10 +166,11 @@ public class Cucumber {
         mapAnnotationsFound.put(annotationName, number);
     }
 
-    private static Element docByClass(Document document, ClassDoc classDoc) {
+    private static Element docByClass(Document document, ClassDoc classDoc) throws DocletCucumberException {
         Element elementClass = document.createElement(TAG_XML.CLASS);
         elementClass.setAttribute(ATTRIBUTE_XML.NAME, classDoc.name());
         elementClass.setAttribute(ATTRIBUTE_XML.PACKAGE, classDoc.qualifiedName());
+        //append to group
         if (listOptions.containsKey(Option.GROUP)) {
             String groupName = DEFAULT_GROUP_NAME;
             if (groups.get(classDoc.qualifiedName()) != null)
@@ -177,12 +178,26 @@ public class Cucumber {
             elementClass.setAttribute(ATTRIBUTE_XML.GROUP, groupName);
         }
 
+        elementClass.setAttribute(ATTRIBUTE_XML.DESCRIPTION, classDoc.commentText());
+        if (classDoc.superclassType().typeName().equals("Enum"))
+            elementClass.appendChild(processEnum(document, classDoc));
         Arrays.stream(classDoc.methods()) //
                 .map(methodDoc -> docByMethod(document, methodDoc)) //
                 .filter(Objects::nonNull) //
                 .forEach(elementClass::appendChild);
 
-        return elementClass.getChildNodes().getLength() > 0 ? elementClass : null;
+        return elementClass;//elementClass.getChildNodes().getLength() > 0 ? elementClass : null;
+    }
+
+    private static Element processEnum(final Document document, final ClassDoc classDoc) {
+        Element elementClass = document.createElement(TAG_XML.ENUM);
+        for(FieldDoc field: classDoc.fields()){
+            Element fieldEl = document.createElement(TAG_XML.FIELD);
+            fieldEl.setAttribute(ATTRIBUTE_XML.NAME, field.name());
+            fieldEl.setAttribute(ATTRIBUTE_XML.DESCRIPTION, field.commentText());
+            elementClass.appendChild(fieldEl);
+        }
+        return elementClass;
     }
 
     private static Element docByMethod(final Document document, final MethodDoc method) {

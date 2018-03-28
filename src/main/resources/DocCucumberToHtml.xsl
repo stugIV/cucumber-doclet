@@ -155,8 +155,8 @@
 			<body>
 				<div id="tabs">
 					<ul>
-						<li><a href="#tabs-1">Search</a></li>
-						<li><a href="#tabs-2">List</a></li>
+						<li><a href="#tabs-1">List</a></li>
+						<li><a href="#tabs-2">Search</a></li>
                         <!--<li><a href="#tabs-Person">Person</a></li>-->
 						<xsl:apply-templates select="GROUP" mode="tabs"/>
 					</ul>

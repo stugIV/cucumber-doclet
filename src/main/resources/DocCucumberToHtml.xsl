@@ -161,7 +161,7 @@
 						<xsl:apply-templates select="GROUP" mode="tabs"/>
 					</ul>
 					<div id="tabs-1" class="ui-widget">
-						<label for="phrases">Search a sentence : </label>
+						<label for="phrases">Search a step : </label>
   						<input id="phrases" />
 						<div id="divDetailResearch" />
 					</div>
